@@ -1,0 +1,23 @@
+{
+  "recommendations": [
+    "esbenp.prettier-vscode",
+    "bradlc.vscode-tailwindcss",
+    "dbaeumer.vscode-eslint",
+    "eamodio.gitlens",
+    "kamikillerto.vscode-colorize",
+    "formulahendry.auto-rename-tag",
+    "PKief.material-icon-theme",
+    "wix.vscode-import-cost",
+    "sdras.night-owl",
+    "dsznajder.es7-react-js-snippets",
+    "burkeholland.simple-react-snippets",
+    "streetsidesoftware.code-spell-checker",
+    "firsttris.vscode-jest-runner",
+    "meganrogge.template-string-converter",
+    "vespa-dev-works.jestrunit"
+    // "silvenon.mdx"
+    // "pflannery.vscode-versionlens"
+    ,
+    "arcanis.vscode-zipfs"
+  ]
+}
