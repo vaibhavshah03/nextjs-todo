@@ -17,7 +17,7 @@ export default function Home() {
       <main>
         <div >
           <h1>
-            Todo App;
+            Todo App
           </h1>
           <div>
           </div>
