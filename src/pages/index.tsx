@@ -1,5 +1,6 @@
 import Head from "next/head";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import clsx from "clsx";
 
 type ITodo = {
   id: string;
@@ -7,19 +8,24 @@ type ITodo = {
   completed: Boolean;
 };
 
+type Filters = {
+  showCompleted: boolean;
+  showRemaining: boolean;
+  search: string;
+};
 export default function Home() {
-  //1. create state
   const [todo, setTodo] = useState<ITodo[]>([]);
-
   const [todoText, setTodoText] = useState("");
-  //2. create handler for adding todo
-  const handleAddTodo = () => {
-    // create obj
+  const [filters, setFilters] = useState<Filters>({
+    showCompleted: false,
+    showRemaining: false,
+    search: "",
+  });
 
+  const handleAddTodo = () => {
     const data = todo.find(
       (item) => item.text.toLowerCase() === todoText.toLowerCase()
     );
-
     if (!data) {
       setTodo((prev) => [
         ...prev,
@@ -31,8 +37,18 @@ export default function Home() {
     }
   };
 
-  const handleUpdateTodoText = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setTodoText(e.target.value);
+  const handleUpdateTodoText = (
+    e:
+      | React.ChangeEvent<HTMLInputElement>
+      | React.KeyboardEvent<HTMLInputElement>
+  ) => {
+    if ((e as React.KeyboardEvent<HTMLInputElement>).key === "Enter") {
+      handleAddTodo();
+    } else if ((e as React.KeyboardEvent<HTMLInputElement>).key === "Escape") {
+      setTodoText("");
+    } else {
+      setTodoText((e as React.ChangeEvent<HTMLInputElement>).target.value);
+    }
   };
 
   const handleToggle = (id: string) => {
@@ -42,9 +58,41 @@ export default function Home() {
       )
     );
   };
+
   const removeTodo = (id: string) => {
     setTodo((prev) => prev.filter((todo) => todo.id !== id));
   };
+
+  const handleFilter = (key: keyof Filters, value: boolean | string) => {
+    switch (key) {
+      case "showCompleted":
+        setFilters((prev) => ({ ...prev, [key]: value as boolean }));
+        break;
+      case "showRemaining":
+        setFilters((prev) => ({ ...prev, [key]: value as boolean }));
+        break;
+      case "search":
+        setFilters((prev) => ({ ...prev, [key]: value as string }));
+        break;
+      default:
+        break;
+    }
+  };
+
+  const displayTodo = useMemo(() => {
+    if (filters.showCompleted) {
+      return todo.filter((todo) => todo.completed);
+    }
+    if (filters.showRemaining) {
+      return todo.filter((todo) => !todo.completed);
+    }
+    if (filters.search) {
+      return todo.filter((todo) =>
+        todo.text.toLowerCase().includes(filters.search.toLowerCase())
+      );
+    }
+    return todo;
+  }, [filters, todo]);
 
   return (
     <>
@@ -55,54 +103,128 @@ export default function Home() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <main>
-        <div>
-          <h1 className="font-bold font-serif flex justify-center items-center">
-            Todo App
-          </h1>
-        </div>
-      </main>
-      <div className="flex flex-col box-border justify-center w-30 h-30">
-        <div className="flex flex-row px-4 h-30 w-full justify-center items-center box-border-10px shadow-md ">
-          <label className="h-10 flex">Enter Your Todo</label>
-          <input
-            className="border-x-black flex pl-10px"
-            type="search"
-            value={todoText}
-            onChange={handleUpdateTodoText}
-            placeholder="Type Here!"
-          />
-          <button
-            className="rounded-full w-20 h-10 bg-slate-600 text-white "
-            disabled={!todoText}
-            onClick={handleAddTodo}
-          >
-            ADD
-          </button>
-        </div>
-        <p className="flex justify-center">My Todo's</p>
-        <div className="flex flex-row space-x-4">
-          <input type="search" />
-        </div>
-        <ul>
-          {todo.map((item) => (
-            <div
-              key={item.id}
-              onClick={() => handleToggle(item.id)}
-              className="flex flex-row items-center space-x-4 justify-center"
+        <header className="p-4 bg-blue-500 flex justify-center">
+          <h1 className="text-2xl font-bold text-white">Todo App</h1>
+        </header>
+
+        <section className="mt-10">
+          <div className="flex w-full justify-center items-center">
+            <section
+              className={clsx(
+                "border w-full max-w-7xl py-4 px-6 border-gray-200 rounded-lg shadow-md",
+                "flex items-center justify-between flex-row "
+              )}
             >
-              <span className="font-semibold m-2">{item.text}</span>
+              <input
+                className="w-full max-w-4xl outline-none"
+                type="text"
+                value={todoText}
+                onKeyDown={handleUpdateTodoText}
+                onChange={handleUpdateTodoText}
+                placeholder="Enter Your Todo Here!"
+              />
               <button
-                className="p-2 border rounded-full text-white bg-slate-600 w-10"
-                onClick={() => removeTodo(item.id)}
+                className={clsx(
+                  "py-1 px-2.5 border rounded-full text-white bg-blue-600",
+                  "disabled:cursor-not-allowed disabled:opacity-50"
+                )}
+                disabled={!todoText}
+                onClick={handleAddTodo}
               >
-                X
+                +
               </button>
-            </div>
-          ))}
-        </ul>
-        <br></br>
-        <div></div>
-      </div>
+            </section>
+          </div>
+          {!!todo.length && (
+            <section className="mt-14 w-full flex justify-center items-center ">
+              <div className="w-full max-w-5xl flex flex-row justify-between space-x-6">
+                <input
+                  className="text outline-none border w-64 border-gray-200 shadow-md p-1"
+                  value={filters.search}
+                  placeholder="Search..."
+                  onChange={(e) => handleFilter("search", e.target.value)}
+                />
+                <div>
+                  <div className="flex flex-row space-x-3">
+                    <input
+                      type="checkbox"
+                      defaultChecked={filters.showRemaining}
+                      onChange={(e) =>
+                        handleFilter("showRemaining", e.target.checked)
+                      }
+                    />
+                    <span>Show remaining</span>
+                  </div>
+                  <div className="flex flex-row space-x-3">
+                    <input
+                      type="checkbox"
+                      defaultChecked={filters.showCompleted}
+                      onChange={(e) =>
+                        handleFilter("showCompleted", e.target.checked)
+                      }
+                    />
+                    <span>Show Completed</span>
+                  </div>
+                </div>
+              </div>
+            </section>
+          )}
+
+          <section className="mt-4 flex flex-col space-y-2 justify-center items-center">
+            {todo.length ? (
+              displayTodo.map((item, idx) => (
+                <div
+                  key={item.id}
+                  className={clsx(
+                    "border w-full max-w-5xl border-gray-200 shadow-lg p-2",
+                    "flex flex-row  items-center space-x-4 justify-between"
+                  )}
+                >
+                  <div>
+                    <span>{idx + 1}.</span>
+                    <span
+                      onClick={() => handleToggle(item.id)}
+                      className={clsx("font-semibold text-xl m-2", {
+                        "text-decoration-line: line-through": item.completed,
+                        "text-black": !item.completed,
+                      })}
+                    >
+                      {item.text}
+                    </span>
+                  </div>
+                  <div></div>
+                  <button
+                    disabled={!item.completed}
+                    className={clsx(
+                      "py-1 px-2.5 border rounded-full text-white bg-blue-600",
+                      "disabled:cursor-not-allowed disabled:opacity-50"
+                    )}
+                    onClick={() => removeTodo(item.id)}
+                  >
+                    X
+                  </button>
+                  <button
+                    disabled={!item.completed}
+                    className={clsx(
+                      "py-1 px-2.5 border rounded-full text-white bg-blue-600",
+                      "disabled:cursor-not-allowed disabled:opacity-50"
+                    )}
+                    onClick={() => removeTodo(item.id)}
+                  >
+                    X
+                  </button>
+                </div>
+              ))
+            ) : (
+              <div className="text-3xl mt-10 text-gray-800 font-bold">
+                Nothing to do Today!!
+              </div>
+            )}
+          </section>
+          <br></br>
+          <div></div>
+        </section>
+      </main>
     </>
   );
 }
