@@ -5,7 +5,8 @@ import clsx from "clsx";
 type ITodo = {
   id: string;
   text: string;
-  completed: Boolean;
+  completed: boolean;
+  edit: boolean;
 };
 
 type Filters = {
@@ -13,9 +14,37 @@ type Filters = {
   showRemaining: boolean;
   search: string;
 };
+const mockTodo = [
+  {
+    id: "2023-03-30T14:37:00.595Z",
+    text: "helllllo",
+    completed: false,
+    edit: false,
+  },
+  {
+    id: "2023-03-30T14:37:01.795Z",
+    text: "guuu",
+    completed: false,
+    edit: false,
+  },
+  {
+    id: "2023-03-30T14:37:02.874Z",
+    text: "gdgsyfgud",
+    completed: false,
+    edit: false,
+  },
+  {
+    id: "2023-03-30T14:37:03.833Z",
+    text: "jfsdgtt",
+    completed: false,
+    edit: false,
+  },
+];
 export default function Home() {
-  const [todo, setTodo] = useState<ITodo[]>([]);
+  const [todo, setTodo] = useState<ITodo[]>(mockTodo);
   const [todoText, setTodoText] = useState("");
+  const [editTodoText, setEditTodoText] = useState<string>("");
+
   const [filters, setFilters] = useState<Filters>({
     showCompleted: false,
     showRemaining: false,
@@ -29,7 +58,12 @@ export default function Home() {
     if (!data) {
       setTodo((prev) => [
         ...prev,
-        { id: new Date().toISOString(), text: todoText, completed: false },
+        {
+          id: new Date().toISOString(),
+          text: todoText,
+          completed: false,
+          edit: false,
+        },
       ]);
       setTodoText("");
     } else {
@@ -93,6 +127,34 @@ export default function Home() {
     }
     return todo;
   }, [filters, todo]);
+
+  const editTodo = (id: string) => {
+    const data = todo.find((item) => {
+      if (item.id !== id) {
+        return item.text.toLowerCase() === editTodoText.toLowerCase();
+      }
+    });
+    console.log({ editTodoText, todo });
+    if (!data) {
+      setTodo((prev) =>
+        prev.map((todo) =>
+          todo.id === id ? { ...todo, text: editTodoText, edit: false } : todo
+        )
+      );
+      setEditTodoText("");
+    } else {
+      window.alert("Todo Added already!");
+    }
+  };
+
+  const handleEditMode = (id: string, text: string) => {
+    setTodo((prev) =>
+      prev.map((todo) =>
+        todo.id === id ? { ...todo, edit: !todo.edit } : todo
+      )
+    );
+    setEditTodoText(text);
+  };
 
   return (
     <>
@@ -181,38 +243,64 @@ export default function Home() {
                   )}
                 >
                   <div>
+                    <input
+                      className="m-2"
+                      type="checkbox"
+                      onChange={() => handleToggle(item.id)}
+                      checked={item.completed}
+                    ></input>
                     <span>{idx + 1}.</span>
-                    <span
-                      onClick={() => handleToggle(item.id)}
-                      className={clsx("font-semibold text-xl m-2", {
-                        "text-decoration-line: line-through": item.completed,
-                        "text-black": !item.completed,
-                      })}
-                    >
-                      {item.text}
-                    </span>
+                    {item.edit ? (
+                      <input
+                        onChange={(e) => setEditTodoText(e.target.value)}
+                        className={clsx(
+                          "font-semibold text-xl m-2 outline-none"
+                        )}
+                        value={editTodoText}
+                      />
+                    ) : (
+                      <span
+                        className={clsx(
+                          "font-semibold text-xl m-2 outline-none",
+                          { "line-through": item.completed }
+                        )}
+                      >
+                        {item.text}
+                      </span>
+                    )}
                   </div>
-                  <div></div>
-                  <button
-                    disabled={!item.completed}
-                    className={clsx(
-                      "py-1 px-2.5 border rounded-full text-white bg-blue-600",
-                      "disabled:cursor-not-allowed disabled:opacity-50"
+                  <div className="flex space-x-2">
+                    {item.edit ? (
+                      <button
+                        className={clsx(
+                          "py-1 px-2.5 border rounded-full text-white bg-yellow-400"
+                        )}
+                        onClick={() => editTodo(item.id)}
+                      >
+                        +
+                      </button>
+                    ) : (
+                      <button
+                        className={clsx(
+                          "py-1 px-2.5 border rounded-full text-white bg-yellow-400"
+                        )}
+                        onClick={(e) => handleEditMode(item.id, item.text)}
+                      >
+                        -
+                      </button>
                     )}
-                    onClick={() => removeTodo(item.id)}
-                  >
-                    X
-                  </button>
-                  <button
-                    disabled={!item.completed}
-                    className={clsx(
-                      "py-1 px-2.5 border rounded-full text-white bg-blue-600",
-                      "disabled:cursor-not-allowed disabled:opacity-50"
-                    )}
-                    onClick={() => removeTodo(item.id)}
-                  >
-                    X
-                  </button>
+
+                    <button
+                      disabled={!item.completed}
+                      className={clsx(
+                        "py-1 px-2.5 border rounded-full text-white bg-blue-600",
+                        "disabled:cursor-not-allowed disabled:opacity-50"
+                      )}
+                      onClick={() => removeTodo(item.id)}
+                    >
+                      X
+                    </button>
+                  </div>
                 </div>
               ))
             ) : (
