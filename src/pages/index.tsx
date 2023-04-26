@@ -1,5 +1,5 @@
 import Head from "next/head";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import clsx from "clsx";
 
 type ITodo = {
@@ -44,14 +44,13 @@ export default function Home() {
   const [todo, setTodo] = useState<ITodo[]>(mockTodo);
   const [todoText, setTodoText] = useState("");
   const [editTodoText, setEditTodoText] = useState<string>("");
-
   const [filters, setFilters] = useState<Filters>({
     showCompleted: false,
     showRemaining: false,
     search: "",
   });
 
-  const handleAddTodo = () => {
+  const handleAddTodo = useCallback(() => {
     const data = todo.find(
       (item) => item.text.toLowerCase() === todoText.toLowerCase()
     );
@@ -69,7 +68,7 @@ export default function Home() {
     } else {
       window.alert("Todo Added already!");
     }
-  };
+  }, [todoText]);
 
   const handleUpdateTodoText = (
     e:
@@ -154,6 +153,21 @@ export default function Home() {
       )
     );
     setEditTodoText(text);
+  };
+
+  const handleEditTodoText = (
+    e:
+      | React.ChangeEvent<HTMLInputElement>
+      | React.KeyboardEvent<HTMLInputElement>,
+    id: string
+  ) => {
+    if ((e as React.KeyboardEvent<HTMLInputElement>).key === "Enter") {
+      editTodo(id);
+    } else if ((e as React.KeyboardEvent<HTMLInputElement>).key === "Escape") {
+      setEditTodoText("");
+    } else {
+      setEditTodoText((e as React.ChangeEvent<HTMLInputElement>).target.value);
+    }
   };
 
   return (
@@ -252,7 +266,9 @@ export default function Home() {
                     <span>{idx + 1}.</span>
                     {item.edit ? (
                       <input
-                        onChange={(e) => setEditTodoText(e.target.value)}
+                        autoFocus
+                        onKeyDown={(e) => handleEditTodoText(e, item.id)}
+                        onChange={(e) => handleEditTodoText(e, item.id)}
                         className={clsx(
                           "font-semibold text-xl m-2 outline-none"
                         )}
